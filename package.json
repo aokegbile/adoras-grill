@@ -1,0 +1,10 @@
+{
+  "name": "adoras-grill",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Adora's Grill website. Menu is read live from the Square catalog.",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel"
+  }
+}
