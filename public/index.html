@@ -185,6 +185,10 @@
       html { scroll-behavior: auto; }
       .card, .btn { transition: none; }
     }
+    .order-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; padding: .6rem .75rem; background: var(--brown); box-shadow: 0 -2px 10px rgba(0,0,0,.25); }
+    .order-bar a { flex: 1 1 140px; max-width: 220px; text-align: center; padding: .65rem .8rem; border-radius: 8px; font-weight: 600; text-decoration: none; background: var(--accent); color: #fff; }
+    .order-bar a.alt { background: transparent; color: #f3d9a4; border: 2px solid #f3d9a4; }
+    body { padding-bottom: 5.5rem; }
   </style>
 </head>
 <body>
@@ -194,8 +198,7 @@
     <p class="tagline">Smoky grilled favorites served over jollof rice, made fresh for the neighborhood.</p>
     <p class="where">Behind Anthony's Barbershop</p>
     <div class="actions hero-actions">
-      <a class="btn" href="https://adoras-grill.square.site" target="_blank" rel="noopener">Order Online</a>
-
+      <a class="btn" href="https://adoras-grill.square.site" target="_blank" rel="noopener">Order now</a>
       <a class="btn ghost" href="#menu">See the menu</a>
     </div>
   </header>
@@ -277,7 +280,7 @@
       </div>
       <div class="actions delivery-wrap">
         <!-- PLACEHOLDER: replace each href with the restaurant's link on that platform -->
-        <a class="btn outline" href="#">DoorDash</a>
+        <a class="btn outline" href="https://www.doordash.com/en/store/adoras-grill-birmingham-53177823/126297960/" target="_blank" rel="noopener">DoorDash</a>
         <a class="btn outline" href="#">Uber Eats</a>
         <a class="btn outline" href="#">Postmates</a>
       </div>
@@ -322,5 +325,11 @@
       }
     })();
   </script>
+  <nav class="order-bar" aria-label="Order">
+    <a href="https://adoras-grill.square.site" target="_blank" rel="noopener">Order now</a>
+    <a class="alt" href="https://www.doordash.com/en/store/adoras-grill-birmingham-53177823/126297960/" target="_blank" rel="noopener">DoorDash</a>
+    <a class="alt" href="#">Uber Eats</a>
+    <a class="alt" href="#">Postmates</a>
+  </nav>
 </body>
 </html>
