@@ -3,12 +3,37 @@
 //   SQUARE_ACCESS_TOKEN     - read-only Production token from the Square Developer Dashboard
 //   SQUARE_MENU_CATEGORY_ID - Square category ID for the public menu
 
-const SQUARE_API = 'https://connect.squareup.com/v2/catalog/search-catalog-items';
+const SQUARE_SEARCH_API = 'https://connect.squareup.com/v2/catalog/search-catalog-items';
+const SQUARE_BATCH_GET_API = 'https://connect.squareup.com/v2/catalog/batch-retrieve';
 const EXCLUDED_NAMES = new Set(['parking']);
 
 function formatPrice(money) {
   if (!money || money.amount == null) return null;
   return '$' + (Number(money.amount) / 100).toFixed(2);
+}
+
+// Image objects are looked up by ID. The search response does not reliably
+// include them in related_objects, so fetch their URLs directly.
+async function fetchImageUrls(token, imageIds) {
+  const urls = {};
+  if (!imageIds.length) return urls;
+  const r = await fetch(SQUARE_BATCH_GET_API, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Square-Version': '2024-08-21',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ object_ids: imageIds })
+  });
+  const data = await r.json();
+  if (!r.ok) return urls;
+  for (const obj of data.objects || []) {
+    if (obj.type === 'IMAGE' && obj.image_data && obj.image_data.url) {
+      urls[obj.id] = obj.image_data.url;
+    }
+  }
+  return urls;
 }
 
 // Catering trays: one Square category per group. Items show all size variations.
@@ -83,7 +108,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const squareRes = await fetch(SQUARE_API, {
+    const squareRes = await fetch(SQUARE_SEARCH_API, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -92,8 +117,7 @@ module.exports = async (req, res) => {
       },
       body: JSON.stringify({
         category_ids: [categoryId],
-        limit: 100,
-        include_related_objects: true
+        limit: 100
       })
     });
     const data = await squareRes.json();
@@ -102,14 +126,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const images = {};
-    for (const obj of data.related_objects || []) {
-      if (obj.type === 'IMAGE' && obj.image_data && obj.image_data.url) {
-        images[obj.id] = obj.image_data.url;
-      }
-    }
-
-    const items = (data.items || [])
+    const rawItems = (data.items || [])
       .filter(item => {
         const d = item.item_data || {};
         if (d.is_archived) return false;
@@ -121,15 +138,22 @@ module.exports = async (req, res) => {
         const d = item.item_data || {};
         const variation = (d.variations || [])[0];
         const vd = variation && variation.item_variation_data;
-        const imageId = (d.image_ids || [])[0];
         return {
           id: item.id,
           name: d.name,
           description: d.description || '',
           price: formatPrice(vd && vd.price_money),
-          image: imageId ? images[imageId] || null : null
+          imageId: (d.image_ids || [])[0] || null
         };
       });
+
+    const imageIds = [...new Set(rawItems.map(i => i.imageId).filter(Boolean))];
+    const images = await fetchImageUrls(token, imageIds);
+
+    const items = rawItems.map(({ imageId, ...rest }) => ({
+      ...rest,
+      image: imageId ? images[imageId] || null : null
+    }));
 
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     res.status(200).json({ items });
