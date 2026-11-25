@@ -145,6 +145,15 @@
     .hero .btn.ghost { background: transparent; border-color: rgba(255, 246, 234, .6); box-shadow: none; }
     .hero .btn.ghost:hover { background: rgba(255, 246, 234, .12); border-color: var(--cream); }
 
+    /* Catering menu */
+    .cat-group { margin-bottom: 2rem; }
+    .cat-group h3 { margin: 0 0 .75rem; font-size: 1.3rem; }
+    .cat-item { padding: .9rem 0; border-bottom: 1px solid #e5dccd; }
+    .cat-item h4 { margin: 0 0 .25rem; font-size: 1.05rem; }
+    .cat-item .desc { margin: 0 0 .4rem; }
+    .cat-item ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .35rem 1.2rem; }
+    .cat-item .price { font-weight: 600; }
+
     /* Catering form */
     .form-wrap { max-width: 680px; margin: 0 auto; }
     form {
@@ -243,6 +252,7 @@
         <h2>Catering</h2>
         <p class="lede">We cater all kinds of events. Tell us what you need and we'll follow up with a quote.</p>
       </div>
+      <div id="catering-menu" class="catering-menu"></div>
       <div class="form-wrap">
         <!-- PLACEHOLDER: replace action with the real catering request handler or email address -->
         <form action="mailto:hello@example.com" method="post" enctype="text/plain">
@@ -319,6 +329,31 @@
           </article>`).join('');
       } catch (err) {
         grid.innerHTML = '<p class="status">Menu is unavailable right now. Please try again later.</p>';
+      }
+    })();
+  </script>
+  <script>
+    (async function () {
+      const box = document.getElementById('catering-menu');
+      function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      }
+      try {
+        const res = await fetch('/api/menu?section=catering');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const { groups } = await res.json();
+        box.innerHTML = groups.filter(g => g.items.length).map(g => `
+          <div class="cat-group">
+            <h3>${esc(g.label)}</h3>
+            ${g.items.map(item => `
+              <div class="cat-item">
+                <h4>${esc(item.name)}</h4>
+                ${item.description ? `<p class="desc">${esc(item.description)}</p>` : ''}
+                <ul>${item.sizes.map(s => `<li>${esc(s.name)} <span class="price">${s.price ? esc(s.price) : 'Price coming soon'}</span></li>`).join('')}</ul>
+              </div>`).join('')}
+          </div>`).join('');
+      } catch (err) {
+        box.innerHTML = '<p class="status">Catering prices are unavailable right now. Please use the quote form below.</p>';
       }
     })();
   </script>
